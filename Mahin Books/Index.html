@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Mahin Books</title>
+	<link rel="stylesheet" href="Styles.css" />
+	<script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-firestore.js"></script>
+</head>
+
+<body class="ms-Fabric">
+	<section class="layout">
+		<section class="sidebar">
+			<nav>
+				<h2 class="ms-fontSize-20">Mahin Books</h1>
+					<input type="search" placeholder="What are you looking for?">
+					<div id="booksList">
+					</div>
+			</nav>
+			<footer>
+				<button class="navButton">Sign in</button>
+				<button class="navButton">Publish</button>
+			</footer>
+		</section>
+		<iframe onload="frame_Loaded(this)" src="Discover.html"></iframe>
+	</section>
+	<script>
+		class authorInfo {
+			constructor(id, info) {
+				this.Id = id;
+				this.Info = info;
+			}
+		}
+
+		class bookInfo {
+			constructor(id, info) {
+				this.Id = id;
+				this.Info = info;
+			}
+
+			getAuthorAsync = async function () {
+				if (this.Author == null) {
+					const authorDetails = await database.collection("Authors").doc(this.Info.Author.toString()).get();
+					this.Author = new authorInfo(authorDetails.id, authorDetails.data());
+				}
+
+				return this.Author;
+			};
+		}
+
+		let books;
+
+		function getBooks() {
+			return books;
+		}
+
+		function setBooks(value) {
+			if (books != value) {
+				books = value;
+				const booksList = document.getElementById("booksList");
+				clearContent(booksList);
+				value.forEach(async (book) => {
+					const itemContent = document.createElement("div");
+					itemContent.className = "verticalStackPanel";
+					const authorCaption = document.createElement("span");
+					authorCaption.style.fontSize = "12px";
+					authorCaption.innerText = (await book.getAuthorAsync()).Info.Name;
+					itemContent.appendChild(document.createTextNode(book.Info.Name));
+					itemContent.appendChild(authorCaption);
+					const navButton = createNavButton(itemContent);
+					navButton.id = book.Id;
+					booksList.appendChild(navButton);
+				});
+			}
+		}
+
+		const firebaseConfig = {
+			apiKey: "AIzaSyCDyehfmcxAok8kV-3UB1W7DTS4MbZXLiw",
+			authDomain: "mahin-books-339f3.firebaseapp.com",
+			projectId: "mahin-books-339f3",
+			storageBucket: "mahin-books-339f3.appspot.com",
+			messagingSenderId: "570487186864",
+			appId: "1:570487186864:web:1892478809a1a893ffa275",
+			measurementId: "G-GTTTP2T18Q"
+		};
+
+		firebase.initializeApp(firebaseConfig);
+		const database = firebase.firestore();
+
+		window.onload = function () {
+			database.collection("Books").orderBy("Name").onSnapshot((querySnapshot) => {
+				let index = 0;
+				let booksInfo = new Array(querySnapshot.length);
+				querySnapshot.forEach((document) => {
+					booksInfo[index] = new bookInfo(document.id, document.data())
+					++index;
+				});
+
+				setBooks(booksInfo);
+			});
+		};
+
+		function frame_Loaded(sender) {
+			window.document.title = sender.contentDocument.title;
+		}
+
+		function clearContent(element) {
+			while (element.hasChildNodes()) {
+				element.removeChild(element.lastChild);
+			}
+		}
+
+		function createNavButton(content) {
+			const result = document.createElement("button");
+			result.className = "navButton";
+			result.appendChild(content);
+			return result;
+		}
+	</script>
+</body>
+
+</html>
